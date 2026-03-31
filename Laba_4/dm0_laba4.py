@@ -7,3 +7,5 @@ def analyze_text_file(file_path):
         print(f"Количество различных символов: {len(set(content))}")
 
 analyze_text_file('laba4.txt')
+
+

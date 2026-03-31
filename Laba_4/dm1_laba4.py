@@ -42,3 +42,5 @@ def generate_stats(input_path, stats_output):
         json.dump(stats_data, f_out, ensure_ascii=False, indent=4)
 
 generate_stats('laba4.txt', 'full_stats.json')
+
+

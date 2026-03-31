@@ -47,3 +47,6 @@ def solve_lzw(input_path, max_table_size=4096):
     return avg_lzw_bits
 
 lzw_result = solve_lzw('laba4.txt', 4096)
+
+
+

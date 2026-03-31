@@ -91,3 +91,6 @@ def run_full_assignment(stats_file, source_text):
         json.dump(huffman_export, f_codes, ensure_ascii=False, indent=4)
 
 run_full_assignment('full_stats.json', 'laba4.txt')
+
+
+
