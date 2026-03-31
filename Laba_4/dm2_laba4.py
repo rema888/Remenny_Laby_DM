@@ -1,6 +1,7 @@
 import json
 import heapq
 import math
+
 def build_huffman(frequencies):
     # Если на вход ничего не пришло, возвращаем пустой словарь
     if not frequencies: return {}
@@ -21,23 +22,36 @@ def build_huffman(frequencies):
     # В куче остался один корень. Превращаем список пар [символ, код] в словарь
     return dict(heap[0][1:])
 
-
 def encode_text(input_path, codes, output_path):
-    with open(input_path, 'r') as f:
+    with open(input_path, 'r', encoding='utf-8') as f:
         text = f.read()
-
     # Заменяем каждый символ текста на его код из словаря
     encoded_string = "".join([codes[char] for char in text])
-
     # Сохраняем как текстовый файл из нулей и единиц
     with open(output_path, 'w') as f_out:
         f_out.write(encoded_string)
+    return len(encoded_string)
 
+def encode_text_pairs(input_path, codes, output_path):
+    with open(input_path, 'r', encoding='utf-8') as f:
+        text = f.read()
+    # Если текст нечетной длины, добавим пробел в конец для формирования последней пары
+    if len(text) % 2 != 0:
+        text += " "
+    encoded_list = []
+    # Идем по тексту с шагом 2
+    for i in range(0, len(text), 2):
+        pair = text[i:i+2]
+        # Берем код из словаря для пары
+        if pair in codes:
+            encoded_list.append(codes[pair])
+    encoded_string = "".join(encoded_list)
+    with open(output_path, 'w') as f_out:
+        f_out.write(encoded_string)
     return len(encoded_string)
 
 def run_full_assignment(stats_file, source_text):
-
-    with open(stats_file, 'r') as f:
+    with open(stats_file, 'r', encoding='utf-8') as f:
         data = json.load(f)
 
     total_n = data["total_chars"]
@@ -49,8 +63,9 @@ def run_full_assignment(stats_file, source_text):
     codes_v1 = build_huffman(char_freqs)
     codes_v2 = build_huffman(bi_freqs)
 
-    # Кодирование текста
+    # Кодирование текста (получаем фактическое количество бит)
     actual_bits = encode_text(source_text, codes_v1, 'encoded_huffman.txt')
+    actual_bits_v2 = encode_text_pairs(source_text, codes_v2, 'encoded_huffman_pairs.txt')
 
     # Средняя длина (бит на символ)
     # Для одиночных
@@ -58,28 +73,30 @@ def run_full_assignment(stats_file, source_text):
     # Для пар (делим на 2, так как один код на два символа)
     avg_h2 = sum((count / total_bi) * len(codes_v2[bi]) for bi, count in bi_freqs.items()) / 2
 
-    # Энтропия Шеннона
+    # Энтропия Шеннона (количество бит на символ)
     shannon_h1 = sum(-(c / total_n) * math.log2(c / total_n) for c in char_freqs.values())
     shannon_h2 = sum(-(c / total_bi) * math.log2(c / total_bi) for c in bi_freqs.values()) / 2
 
-    # Равномерный код (по заданию 5 бит)
-    uniform_code = 5.0
+    # Равномерный код (по заданию 5 бит) - это размер несжатого текста
+    size_uncompressed = total_n * 5
 
-    print(f"{'ПОКАЗАТЕЛЬ':<25} | {'ЗНАЧЕНИЕ (бит/симв)':<20}")
+    # Вычисляем коэффициент сжатия K = размер сжатого / размер несжатого
+    k1 = actual_bits / size_uncompressed
+    k2 = actual_bits_v2 / size_uncompressed
 
-    print(f"{'Равномерный код':<25} | {uniform_code:<20.4f}")
+    print("\n" + "="*70)
+    print(f"{'МЕТОД':<30} | {'ОБЪЕМ (бит)':<15} | {'КОЭФ. СЖАТИЯ (K)':<15}")
+    print("-" * 70)
+    print(f"{'Равномерный код (5 бит)':<30} | {size_uncompressed:<15} | {1.0000:<15.4f}")
+    print(f"{'Хаффман (1 символ)':<30} | {actual_bits:<15} | {k1:<15.4f}")
+    print(f"{'Хаффман (пары)':<30} | {actual_bits_v2:<15} | {k2:<15.4f}")
+    print("="*70)
 
-    print(f"{'Хаффман (один символ)':<25} | {avg_h1:<20.4f}")
-    print(f"{'Хаффман (пары символов)':<25} | {avg_h2:<20.4f}")
-
-    print(f"{'Шеннон (один символ)':<25} | {shannon_h1:<20.4f}")
-    print(f"{'Шеннон (пары символов)':<25} | {shannon_h2:<20.4f}")
-
-    print(f"\nАнализ эффективности:")
-    print(f"Хаффман (1 симв) эффективнее равномерного на: {((1 - avg_h1 / 5) * 100):.2f}%")
-    print(f"Хаффман (2 симв) эффективнее равномерного на: {((1 - avg_h2 / 5) * 100):.2f}%")
-
-    print(f"Фактическая длина: {actual_bits} бит")
+    print(f"\nСРАВНЕНИЕ С ЭНТРОПИЕЙ ШЕННОНА (бит на символ):")
+    print(f"{'Вариант':<25} | {'Хаффман (Lcp)':<15} | {'Шеннон (H)':<15}")
+    print("-" * 60)
+    print(f"{'Одиночные символы':<25} | {avg_h1:<15.4f} | {shannon_h1:<15.4f}")
+    print(f"{'Пары символов':<25} | {avg_h2:<15.4f} | {shannon_h2:<15.4f}")
 
     # Сохраняем коды в отдельный файл
     huffman_export = {
@@ -87,10 +104,7 @@ def run_full_assignment(stats_file, source_text):
         "bigram_codes": codes_v2
     }
 
-    with open('huffman_codes.json', 'w') as f_codes:
+    with open('huffman_codes.json', 'w', encoding='utf-8') as f_codes:
         json.dump(huffman_export, f_codes, ensure_ascii=False, indent=4)
 
 run_full_assignment('full_stats.json', 'laba4.txt')
-
-
-
