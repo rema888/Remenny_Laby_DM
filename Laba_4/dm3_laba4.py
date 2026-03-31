@@ -43,7 +43,7 @@ def solve_lzw(input_path, max_table_size=4096):
     print(f"Бит на один код: {bits_per_code}")
     print(f"Средняя длина: {avg_lzw_bits:.4f} бит/символ")
     print("-" * 35)
-
+    print(f"Первые 20 кодов LZW: {compressed_data[:20]}")
     return avg_lzw_bits
 
 lzw_result = solve_lzw('laba4.txt', 4096)
