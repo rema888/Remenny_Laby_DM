@@ -125,6 +125,9 @@ start_t = time.time()
 d_distances, d_parents, d_iters = dijkstra(n, graph, 0)
 d_time = time.time() - start_t
 
+# Расчет теоретической сложности O(m * log2(n))
+theory_complexity = int(m_actual * math.log2(n))
+
 # Находим путь до вершины с максимальным номером
 target_node = n - 1
 path = get_full_path(d_parents, target_node)
@@ -138,6 +141,7 @@ else:
     print(f"   Маршрут: {' -> '.join(map(str, path[:10]))} ... -> {path[-1]}")
 print(f"   Вес пути: {d_distances[target_node]}")
 print(f"   Фактическое количество итераций: {d_iters}")
+print(f"   Теоретическая сложность O(m log n): ~{theory_complexity} операций")
 
 # 4. СРАВНЕНИЕ
 print(f"\n--- СРАВНЕНИЕ С АСИМПТОТИКОЙ ---")
